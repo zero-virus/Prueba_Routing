@@ -1,10 +1,11 @@
+
 class Route < ApplicationRecord
   belongs_to :vehicle
   belongs_to :driver
 
   validates :load_type, inclusion: {in: %w(refrigerada general)}
   validate :validate_load_type, :validate_capacity, on: :create
-  validate :validate_stops, :validate_cities, on: :create# , :validate_times_overlap
+  validate :validate_stops, :validate_cities, :validate_times_overlap
 
   def validate_load_type
     vehicle = Vehicle.find(self.vehicle_id.to_s)
@@ -33,3 +34,26 @@ class Route < ApplicationRecord
         errors.add(:cities, "The driver don't go to that city")
     end
   end
+
+  def validate_times_overlap
+    if Routes.exist(driver_id: self.driver_id.to_i) || Routes.exist(vehicle_id: self.vehicle_id.to_i)
+        routes_all_driver = Routes.where(driver_id: self.driver_id.to_i)
+        routes_all_vehicle = Routes.where(vehicle_id: self.vehicle_id.to_i)
+        save_routes = []
+        routes_all_driver.each do |route|
+            unless (self.start_at..self.ends_at).overlaps?(route.start_at..route.ends_at)
+                save_routes << (route)
+            end
+        end
+        routes_all_vehicle.each do |route|
+            unless (self.start_at..self.ends_at).overlaps?(route.start_at..route.ends_at)
+                save_routes << (route)
+            end
+        end
+        if save_routes != []
+            errors.add(:start_at,:ends_at, "The driver or vehicule are not available in this hour")
+        end
+
+    end
+  end
+end
