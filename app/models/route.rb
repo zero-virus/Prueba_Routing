@@ -62,4 +62,25 @@ class Route < ApplicationRecord
         end
     end
   end
+
+=begin
+The routes are entered and the different possible combinations between drivers and vehicles
+are tested until one is acceptable
+=end
+    def algorithm_for_database
+        if self.save == false
+            drivers = Driverf.all
+            vehicles = Vehicle.all
+            drivers.each do |driver|
+                self.driver_id = driver.id.to_s
+                vehicles.each do |vehicle|
+                    self.vehicle_id = vehicle.id.to_s
+                    if self.save
+                        break
+                    end
+                end
+            end
+        end
+    end
+
 end
